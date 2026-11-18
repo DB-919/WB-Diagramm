@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7fa">
+  <title>Becker WB Viewer</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>BECKER WB VIEWER <span>V1.1</span></h1>
+      <p>Wärmebehandlungsdaten einlesen · darstellen · markieren · exportieren</p>
+    </div>
+    <button id="resetBtn" class="ghost" type="button">Zurücksetzen</button>
+  </header>
+
+  <main>
+    <section id="dropZone" class="dropzone" tabindex="0" aria-label="Wärmebehandlungsdatei auswählen oder hier ablegen">
+      <input id="fileInput" type="file" accept=".txt,.csv,.tsv,text/plain,text/csv" hidden>
+      <div class="drop-icon">↥</div>
+      <div><strong>WB-Datei auswählen</strong><br><span>oder TXT / CSV / TSV hier ablegen</span></div>
+      <button id="pickBtn" type="button" class="primary">Datei auswählen</button>
+    </section>
+
+    <section id="workspace" class="hidden">
+      <div class="filebar">
+        <div><strong id="fileName">–</strong><div id="fileMeta" class="muted">–</div></div>
+        <button id="changeBtn" type="button" class="ghost">Andere Datei</button>
+      </div>
+
+      <section class="setup-grid">
+        <div class="card panel">
+          <div class="panel-head">
+            <div>
+              <h2>Kanäle</h2>
+              <p>Messkanäle ein-/ausblenden und frei benennen.</p>
+            </div>
+          </div>
+          <div id="channelChecks" class="channel-list"></div>
+        </div>
+
+        <div class="card panel">
+          <div class="panel-head">
+            <div>
+              <h2>Diagramm</h2>
+              <p>Startpunkt, Zeitachse und Y-Skalierung.</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label class="checkline full"><input id="startEnabled" type="checkbox"> Diagramm ab Starttemperatur</label>
+            <label><span>Starttemperatur</span><div class="input-unit"><input id="startTemp" type="number" step="0.1" value="400"><b>°C</b></div></label>
+            <label><span>Zeitachse</span><select id="timeUnit"><option value="min">Minuten</option><option value="h">Stunden</option></select></label>
+            <label><span>Y-Min optional</span><input id="yMin" type="number" step="0.1" placeholder="Automatisch"></label>
+            <label><span>Y-Max optional</span><input id="yMax" type="number" step="0.1" placeholder="Automatisch"></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card panel band-panel">
+        <div class="panel-head inline-head">
+          <div>
+            <h2>Solltemperaturbereiche</h2>
+            <p>Sollwert ± Toleranz wird als farbiges Band im Diagramm dargestellt.</p>
+          </div>
+          <button id="addBandBtn" type="button">+ Bereich</button>
+        </div>
+        <div id="bands" class="bands"></div>
+      </section>
+
+      <section class="card panel hold-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Haltezeit markieren</h2>
+            <p>Zeiten beziehen sich auf die aktuell dargestellte Zeitachse nach einem optionalen Starttemperatur-Schnitt.</p>
+          </div>
+        </div>
+        <div class="hold-controls">
+          <label class="checkline"><input id="holdEnabled" type="checkbox"> Haltebereich anzeigen</label>
+          <label><span>Start [min]</span><input id="holdStart" type="number" min="0" step="0.1" placeholder="z. B. 45"></label>
+          <label><span>Ende [min]</span><input id="holdEnd" type="number" min="0" step="0.1" placeholder="z. B. 165"></label>
+          <div class="hold-actions">
+            <button id="pickHoldStart" type="button">Start im Diagramm setzen</button>
+            <button id="pickHoldEnd" type="button">Ende im Diagramm setzen</button>
+            <button id="clearHold" type="button" class="ghost">Löschen</button>
+          </div>
+        </div>
+        <div id="pickHint" class="pick-hint hidden" role="status"></div>
+      </section>
+
+      <div id="stats" class="stats"></div>
+
+      <section class="chart-card card">
+        <div class="chart-head">
+          <div><h2>Temperaturverlauf</h2><div id="rangeInfo" class="muted"></div></div>
+          <div class="actions">
+            <button id="pngBtn" type="button">PNG</button>
+            <button id="svgBtn" type="button">SVG</button>
+            <button id="csvBtn" type="button">CSV</button>
+            <button id="printBtn" type="button">Drucken / PDF</button>
+          </div>
+        </div>
+        <div id="chartWrap" class="chart-wrap">
+          <svg id="chart" role="img" aria-label="Temperaturverlauf"></svg>
+          <div id="tooltip" class="tooltip hidden"></div>
+        </div>
+        <div id="legend" class="legend"></div>
+      </section>
+
+      <div id="notice" class="notice hidden" role="status"></div>
+    </section>
+  </main>
+
+  <footer>Alle Messdaten werden ausschließlich lokal im Browser verarbeitet. Es findet kein Upload statt.</footer>
+  <script src="parser.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
