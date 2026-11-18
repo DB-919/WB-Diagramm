@@ -1,4 +1,4 @@
-BECKER WB VIEWER V1.1
+BECKER WB VIEWER V1.2
 =====================
 
 Zweck
@@ -7,8 +7,12 @@ Sehr einfache Web-App zum Einlesen und Darstellen von Wärmebehandlungsdaten.
 Keine Datenbank, keine Projekte, keine QS-Freigabe, keine Zugversuche.
 Alle Daten werden ausschließlich lokal im Browser verarbeitet.
 
-Neu in V1.1
+Neu in V1.2
 -----------
+- MN/AT-Festbreitenformat mit teilweise leeren Kanälen unterstützt
+- Leere CH2/CH3-Spalten bleiben leer; CH4 wird nicht mehr nach links verschoben
+- Nicht belegte Kanäle werden nach dem Import automatisch ausgeblendet
+
 - Messkanäle frei benennbar (z. B. CH1 -> Ofen links)
 - Bis zu 5 Solltemperaturbereiche als farbige Diagrammbänder
 - Sollbereich über Solltemperatur ± Toleranz definierbar
