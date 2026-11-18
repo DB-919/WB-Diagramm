@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f7fa">
-<title>Becker WB Viewer V1.3</title>
+<title>Becker WB Viewer V1.4</title>
 <style>
 :root{
   --bg:#f5f7fa;--panel:#fff;--text:#17202a;--muted:#6b7785;--border:#d9e0e7;
@@ -114,7 +114,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:12px 20px 22p
 
   <header class="topbar">
     <div>
-      <h1>BECKER WB VIEWER <span>V1.3</span></h1>
+      <h1>BECKER WB VIEWER <span>V1.4</span></h1>
       <p>Wärmebehandlungsdaten einlesen · darstellen · markieren · exportieren</p>
     </div>
     <button id="resetBtn" class="ghost" type="button">Zurücksetzen</button>
@@ -313,41 +313,48 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:12px 20px 22p
     }
     if(hi<0)return null;
 
-    const raw=[]; let skipped=0, interval='', unit='';
-    const rowRe=/^\s*(?:AT|MN)\s+(\d{4}-\d{1,2}-\d{1,2})\s+(\d{1,2}:\d{2}:\d{2}(?:[.,]\d+)?)\s+(\S+)(.*)$/i;
+    const raw=[]; let skipped=0, interval='', unit='', fixedWidthRows=0, tokenRows=0;
+    const dateRe=/^(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})$/;
+    const timeRe=/^\d{1,2}:\d{2}:\d{2}(?:[.,]\d+)?$/;
 
     for(let i=hi+1;i<lines.length;i++){
       const line=lines[i];
       if(!line || !line.trim())continue;
-      const mm=line.match(rowRe);
-      if(!mm){skipped++;continue;}
 
-      const date=mm[1], time=mm[2], intv=mm[3], tail=mm[4]||'';
+      let date='',time='',intv='',c1='',c2='',c3='',c4='',u='',recordType='';
+      let parsed=false;
+
+      // Standardformat des MN/AT-Loggers: Die komplette Zeile hat feste
+      // Positionen. Dadurch bleiben leere CH2/CH3/CH4-Felder erhalten.
+      // Das funktioniert für 1, 2, 3 oder 4 tatsächlich belegte Kanäle.
+      if(line.length>=63){
+        recordType=line.slice(0,4).trim();
+        date=line.slice(4,14).trim();
+        time=line.slice(15,23).trim();
+        intv=line.slice(24,30).trim();
+        c1=line.slice(30,38).trim();
+        c2=line.slice(38,46).trim();
+        c3=line.slice(46,54).trim();
+        c4=line.slice(54,62).trim();
+        u=line.slice(62).trim();
+        if(/^(?:AT|MN)$/i.test(recordType) && dateRe.test(date) && timeRe.test(time)){
+          parsed=true; fixedWidthRows++;
+        }
+      }
+
+      // Fallback für ältere/kompaktere Exporte, in denen alle vier Kanäle
+      // als echte Whitespace-Tokens vorhanden sind.
+      if(!parsed){
+        const parts=line.trim().split(/\s+/);
+        if(parts.length===9 && /^(?:AT|MN)$/i.test(parts[0]) && dateRe.test(parts[1]) && timeRe.test(parts[2])){
+          [recordType,date,time,intv,c1,c2,c3,c4,u]=parts;
+          parsed=true; tokenRows++;
+        }
+      }
+
+      if(!parsed){skipped++;continue;}
       const ms=parseDateTime(date,time);
       if(!Number.isFinite(ms)){skipped++;continue;}
-
-      let channelArea=tail, u='';
-      const unitMatch=tail.match(/^(.*?)(?:\s{2,})([A-Za-z°º]+)\s*$/);
-      if(unitMatch){
-        channelArea=unitMatch[1];
-        u=unitMatch[2];
-      }
-
-      let c1='',c2='',c3='',c4='';
-      if(channelArea.length>=32){
-        // Standardexport: vier Kanalblöcke mit je 8 Zeichen.
-        // Zusätzliche Zeichen rechts werden ignoriert, damit Leerkanäle
-        // positionsgetreu erhalten bleiben.
-        c1=channelArea.slice(0,8).trim();
-        c2=channelArea.slice(8,16).trim();
-        c3=channelArea.slice(16,24).trim();
-        c4=channelArea.slice(24,32).trim();
-      }else{
-        // Fallback für kompakte Exporte, nur wenn alle vier Kanäle vorhanden sind.
-        const p=tail.trim().split(/\s+/);
-        if(p.length<5){skipped++;continue;}
-        c1=p[0]; c2=p[1]; c3=p[2]; c4=p[3]; u=p[4]||u;
-      }
 
       raw.push({timeMs:ms,CH1:c1,CH2:c2,CH3:c3,CH4:c4});
       if(!interval && intv)interval=intv;
@@ -358,7 +365,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:12px 20px 22p
       throw new Error('MN/AT-Loggerformat erkannt, aber keine gültigen Messzeilen gefunden.');
 
     return finalize(raw,['CH1','CH2','CH3','CH4'],{
-      format:'MN/AT Logger TXT',interval,unit,skippedRows:skipped
+      format:'MN/AT Logger TXT',interval,unit,skippedRows:skipped,
+      parser:fixedWidthRows?'Festbreite':'Whitespace',fixedWidthRows,tokenRows
     });
   }
 

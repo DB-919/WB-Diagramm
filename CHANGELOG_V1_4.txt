@@ -1,0 +1,8 @@
+Becker WB Viewer V1.4
+=====================
+
+- MN/AT-Loggerimport auf positionsgenaues Festbreitenformat umgestellt.
+- Leere Kanalfelder bleiben erhalten; Dateien mit nur CH1 sowie beliebigen 1-4 belegten Kanälen werden korrekt erkannt.
+- Whitespace-Fallback für ältere vollständige Loggerexporte bleibt erhalten.
+- Anzeige listet nur tatsächlich numerisch belegte Kanäle.
+- Regressionstest für CH1-only, CH1+CH4 und CH1-CH4 ergänzt.
